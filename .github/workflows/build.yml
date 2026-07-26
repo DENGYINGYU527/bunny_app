@@ -8,7 +8,7 @@ on:
 jobs:
   build-android:
     name: Build Android APK
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,12 +44,17 @@ jobs:
       - name: Install Android SDK components
         run: |
           sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-          sdkmanager --list_installed
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+
+      - name: Check Flutter environment
+        working-directory: ${{ steps.locate.outputs.dir }}
+        run: flutter doctor -v
 
       - name: Get dependencies
         working-directory: ${{ steps.locate.outputs.dir }}
@@ -57,7 +62,7 @@ jobs:
 
       - name: Build APK
         working-directory: ${{ steps.locate.outputs.dir }}
-        run: flutter build apk --release --verbose
+        run: flutter build apk --release --no-tree-shake-icons
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4

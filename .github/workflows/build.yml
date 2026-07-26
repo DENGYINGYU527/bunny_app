@@ -62,13 +62,30 @@ jobs:
 
       - name: Build APK
         working-directory: ${{ steps.locate.outputs.dir }}
-        run: flutter build apk --release --no-tree-shake-icons
+        run: |
+          flutter build apk --release --no-tree-shake-icons --verbose > build.log 2>&1
+          ls -la build/app/outputs/flutter-apk/
 
       - name: Upload Android APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: bunny-android-apk
           path: ${{ steps.locate.outputs.dir }}/build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build-log
+          path: ${{ steps.locate.outputs.dir }}/build.log
+
+      - name: Print build log tail
+        if: failure()
+        working-directory: ${{ steps.locate.outputs.dir }}
+        run: |
+          echo "===== Android build log tail ====="
+          tail -n 200 build.log
 
   build-windows:
     name: Build Windows App
